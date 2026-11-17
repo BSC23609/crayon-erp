@@ -4,5 +4,5 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: { proxy: { '/api': 'http://localhost:8000' } },
-  build: { target: 'es2022', cssCodeSplit: true, sourcemap: false },
+  build: { target: 'es2022', cssCodeSplit: true, sourcemap: false, reportCompressedSize: false },
 })
