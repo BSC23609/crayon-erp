@@ -25,10 +25,11 @@ def _conninfo() -> str:
     return make_conninfo(**params)
 
 def _connect() -> psycopg.Connection:
-    return psycopg.connect(
-        _conninfo(), row_factory=dict_row, prepare_threshold=None,
-        connect_timeout=10, options="-c search_path=erp,public",
-    )
+    conn = psycopg.connect(_conninfo(), row_factory=dict_row, prepare_threshold=None, connect_timeout=10)
+    # Neon's pooler rejects startup options, so set the schema inside the transaction.
+    # SET LOCAL lasts only for this transaction, so it cannot leak to other pooled clients.
+    conn.execute("SET LOCAL search_path TO erp, public")
+    return conn
 
 @contextmanager
 def tx():
