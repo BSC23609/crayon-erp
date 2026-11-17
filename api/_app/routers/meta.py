@@ -7,8 +7,8 @@ router = APIRouter(prefix="/api", tags=["meta"])
 
 @router.get("/health")
 def health():
-    from ..config import settings
-    if not settings.database_url or "localhost" in settings.database_url:
+    import os
+    if not os.environ.get("DATABASE_URL"):
         return JSONResponse({"status": "error", "database": "DATABASE_URL is not set for this environment"}, status_code=503)
     try:
         db = fetch_one("SELECT now() AS db_time, fin_year(current_date) AS fin_year")
