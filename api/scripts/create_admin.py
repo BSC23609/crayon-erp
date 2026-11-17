@@ -11,6 +11,4 @@ with tx() as conn:
                         ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash RETURNING id""",
                      (name, email, hash_password(pw))).fetchone()
     conn.execute("INSERT INTO user_role(user_id, role_id) SELECT %s, id FROM role WHERE code='admin' ON CONFLICT DO NOTHING", (u["id"],))
-from _app.db import pool
-pool().close()
 print("admin user id", u["id"])

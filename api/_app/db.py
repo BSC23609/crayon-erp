@@ -1,32 +1,29 @@
-"""Postgres access with psycopg 3. One small pool per serverless instance.
-On Neon use the *pooled* connection string (host contains '-pooler')."""
+"""Postgres access with psycopg 3.
+
+Serverless-friendly: one short-lived connection per request, no pool threads.
+Neon's *pooled* endpoint (host contains '-pooler') does the pooling, so
+connections are cheap; prepared statements are disabled for PgBouncer."""
 from contextlib import contextmanager
+import psycopg
 from psycopg.rows import dict_row
-from psycopg_pool import ConnectionPool
 from .config import settings
 
-_pool: ConnectionPool | None = None
-
-def pool() -> ConnectionPool:
-    global _pool
-    if _pool is None:
-        _pool = ConnectionPool(
-            settings.database_url, min_size=0, max_size=5, open=True,
-            kwargs={"row_factory": dict_row, "options": "-c search_path=erp,public", "prepare_threshold": None},
-        )
-    return _pool
+def _connect() -> psycopg.Connection:
+    return psycopg.connect(
+        settings.database_url, row_factory=dict_row, prepare_threshold=None,
+        connect_timeout=10, options="-c search_path=erp,public",
+    )
 
 @contextmanager
 def tx():
     """A connection inside one transaction: commits on success, rolls back on error."""
-    with pool().connection() as conn:
-        with conn.transaction():
-            yield conn
+    with _connect() as conn:          # psycopg commits on clean exit, rolls back on exception
+        yield conn
 
 def fetch_all(sql: str, params=None):
-    with pool().connection() as conn:
+    with _connect() as conn:
         return conn.execute(sql, params or {}).fetchall()
 
 def fetch_one(sql: str, params=None):
-    with pool().connection() as conn:
+    with _connect() as conn:
         return conn.execute(sql, params or {}).fetchone()

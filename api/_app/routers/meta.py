@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from ..db import fetch_one, fetch_all
 from ..deps import current_user, User
 
@@ -6,7 +7,16 @@ router = APIRouter(prefix="/api", tags=["meta"])
 
 @router.get("/health")
 def health():
-    db = fetch_one("SELECT now() AS db_time, fin_year(current_date) AS fin_year")
+    from ..config import settings
+    if not settings.database_url or "localhost" in settings.database_url:
+        return JSONResponse({"status": "error", "database": "DATABASE_URL is not set for this environment"}, status_code=503)
+    try:
+        db = fetch_one("SELECT now() AS db_time, fin_year(current_date) AS fin_year")
+    except Exception as e:  # report the kind of failure, never the connection string
+        msg = str(e).split("\n")[0]
+        if "@" in msg:
+            msg = msg.split("@")[-1]
+        return JSONResponse({"status": "error", "database": f"{type(e).__name__}: {msg}"[:300]}, status_code=503)
     return {"status": "ok", **db}
 
 @router.get("/meta/settings")
