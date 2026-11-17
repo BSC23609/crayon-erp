@@ -41,7 +41,7 @@ the audit log, document numbering and the Tally connector. No Tally masters are 
 createdb crayon && psql -d crayon -f db/schema.sql -f db/seed.sql
 # API
 cd api && pip install -r requirements.txt
-DATABASE_URL=postgresql://localhost/crayon COOKIE_SECURE=0 uvicorn app.main:app --reload --port 8000
+DATABASE_URL=postgresql://localhost/crayon COOKIE_SECURE=0 uvicorn _app.main:app --reload --port 8000
 # web (proxies /api to :8000)
 cd web && npm install && npm run dev
 ```
@@ -49,8 +49,8 @@ API reference while running: http://localhost:8000/api/docs
 
 ## Conventions for the next phases
 
-- **Lists:** add a resource to `api/app/routers/resources.py` and a `ListDef` to `web/src/nav.ts`; paging, search, sort and status filters come free.
-- **Documents:** follow `api/app/routers/indent.py`: number from `next_doc_no()`, everything in one transaction, `audit()` on every change, approval rows on submit.
+- **Lists:** add a resource to `api/_app/routers/resources.py` and a `ListDef` to `web/src/nav.ts`; paging, search, sort and status filters come free.
+- **Documents:** follow `api/_app/routers/indent.py`: number from `next_doc_no()`, everything in one transaction, `audit()` on every change, approval rows on submit.
 - **Stock:** only ever `INSERT INTO stock_move`. The trigger keeps `stock_balance` current, and updates or deletes are refused.
 - **Tally:** never call Tally from the API. Insert the voucher XML into `tally_outbox`; the connector posts it.
 - **Names:** `tally_name` on items, parties and godowns must match Tally exactly.

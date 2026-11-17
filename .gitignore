@@ -1,0 +1,12 @@
+node_modules/
+web/dist/
+__pycache__/
+*.pyc
+.env
+.env.local
+.vercel/
+tally-connector/config.ini
+tally-connector/dist/
+tally-connector/build/
+api/uv.lock
+api/pyproject.toml

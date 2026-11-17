@@ -2,8 +2,8 @@
    DATABASE_URL=... python scripts/create_admin.py "Full Name" email@crayonroofings.com 'StrongPassword'"""
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from app.db import tx
-from app.security import hash_password
+from _app.db import tx
+from _app.security import hash_password
 
 name, email, pw = sys.argv[1:4]
 with tx() as conn:
@@ -11,6 +11,6 @@ with tx() as conn:
                         ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash RETURNING id""",
                      (name, email, hash_password(pw))).fetchone()
     conn.execute("INSERT INTO user_role(user_id, role_id) SELECT %s, id FROM role WHERE code='admin' ON CONFLICT DO NOTHING", (u["id"],))
-from app.db import pool
+from _app.db import pool
 pool().close()
 print("admin user id", u["id"])
